@@ -1,14 +1,40 @@
-# macOS
-.DS_Store
+# Databricks
+.databricks/
+*.dbc
 
-# Python
+# Python artifacts
 __pycache__/
 *.py[cod]
-.venv/
-venv/
-.ipynb_checkpoints/
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
 
-# Databricks / local secrets
-.databricks/
-*.env
+# Jupyter / Databricks notebooks
+.ipynb_checkpoints/
+*.nbconvert.*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Secrets and environment variables
 .env
+.env.local
+*.pem
+*.key
+
+# Data files — never commit raw data to git
+data/
+*.csv
+*.parquet
