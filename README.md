@@ -87,14 +87,16 @@ Unity Catalog: catalog `workspace` (Free Edition default) → schemas `raw` / `b
 ## Getting Started
 
 1. Import the notebooks into Databricks (**Repos**, or upload the `.ipynb` files).
-2. Download the CSV from [Kaggle](https://www.kaggle.com/datasets/uom190346a/e-commerce-customer-behavior-dataset)
-   and upload it via **Catalog → Create → Table** so it registers as
-   `workspace.default.ecommerce_customers` (update `SOURCE_TABLE` in notebook `00` if your name differs).
-3. Run the notebooks in order:
+2. Run the **Configuration cell** of `schema_mgt/00_setup_and_data_prep` once — it creates the
+   schemas and the Unity Catalog Volume `workspace.raw.landing`.
+3. Download the CSV from [Kaggle](https://www.kaggle.com/datasets/uom190346a/e-commerce-customer-behavior-dataset),
+   then in **Catalog → workspace → raw → Volumes → landing** click **Upload to this volume** and add the CSV
+   (any filename — notebook `00` reads every CSV in the folder).
+4. Run the notebooks in order:
 
 | Step | Notebook | Description |
 |:----:|----------|-------------|
-| 0 | `schema_mgt/00_setup_and_data_prep` | Create schemas; read source table; normalise columns; land `raw.customers_raw` |
+| 0 | `schema_mgt/00_setup_and_data_prep` | Create schemas + Volume; read CSV from the Volume; normalise columns; land `raw.customers_raw` |
 | 1 | `src/01_customers_bronze` | Raw → Bronze with `ingestion_timestamp` + `source_file` lineage |
 | 2 | `src/02_customers_silver` | Quality expectations (pass / quarantine) + auto-clustered write |
 | 3 | `src/03_customers_gold` | Customer value by membership tier & city + Delta Time Travel |
