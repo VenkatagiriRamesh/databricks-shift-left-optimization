@@ -32,13 +32,13 @@ running separate jobs to fix it later:
   picks and *evolves* clustering keys from query patterns. **No `OPTIMIZE`/`ZORDER` job, no keys to babysit.**
 
 Fewer scheduled jobs, predictable performance, and a Gold layer trusted by construction — all on
-**Databricks Free Edition**.
+**Databricks** with Unity Catalog.
 
 | Layer | Purpose | Table (`CLUSTER BY AUTO`) |
 |:-----:|---------|---------------------------|
-| **Bronze** | Raw ingestion + lineage (raw fidelity preserved) | `workspace.bronze.customers_bronze` |
-| **Silver** | DLT-style quality expectations, on input | `workspace.silver.customers_silver` (+ `customers_quarantine`) |
-| **Gold** | Customer value by segment | `workspace.gold.segment_value` |
+| **Bronze** | Raw ingestion + lineage (raw fidelity preserved) | `shift_left_optimization.bronze.customers_bronze` |
+| **Silver** | DLT-style quality expectations, on input | `shift_left_optimization.silver.customers_silver` (+ `customers_quarantine`) |
+| **Gold** | Customer value by segment | `shift_left_optimization.gold.segment_value` |
 
 ---
 
@@ -47,8 +47,8 @@ Fewer scheduled jobs, predictable performance, and a Gold layer trusted by const
 **[E-Commerce Customer Behavior](https://www.kaggle.com/datasets/uom190346a/e-commerce-customer-behavior-dataset)**
 — ~350 rows, one customer per row, with columns `Customer ID, Gender, Age, City, Membership Type,
 Total Spend, Items Purchased, Average Rating, Discount Applied, Days Since Last Purchase,
-Satisfaction Level`. Small enough to run instantly on Free Edition, and it ships with real
-defects so the quality pre-checks catch genuine problems:
+Satisfaction Level`. Small enough to run instantly on any Databricks cluster, and it ships with
+real defects so the quality pre-checks catch genuine problems:
 
 | Real / business-rule defect | Expectation that catches it |
 |-----------------------------|-----------------------------|
@@ -79,29 +79,29 @@ databricks-shift-left-optimization/
 ├── .gitignore · LICENSE · README.md
 ```
 
-Unity Catalog: catalog `workspace` (Free Edition default) → schemas `raw` / `bronze` / `silver` /
-`gold`, all created on first run.
+Unity Catalog: catalog `shift_left_optimization` → schemas `raw` / `bronze` / `silver` / `gold`,
+all created on first run. The source table lives in `shift_left_optimization.default`.
 
 ---
 
 ## Getting Started
 
 1. Import the notebooks into Databricks (**Repos**, or upload the `.ipynb` files).
-2. Run the **Configuration cell** of `schema_mgt/00_setup_and_data_prep` once — it creates the
-   schemas and the Unity Catalog Volume `workspace.raw.landing`.
-3. Download the CSV from [Kaggle](https://www.kaggle.com/datasets/uom190346a/e-commerce-customer-behavior-dataset),
-   then in **Catalog → workspace → raw → Volumes → landing** click **Upload to this volume** and add the CSV
-   (any filename — notebook `00` reads every CSV in the folder).
-4. Run the notebooks in order:
+2. Download the CSV from [Kaggle](https://www.kaggle.com/datasets/uom190346a/e-commerce-customer-behavior-dataset)
+   and upload it to Unity Catalog via **Catalog → Create → Table**, into catalog
+   `shift_left_optimization`, schema `default` — it registers as the managed table
+   `shift_left_optimization.default.e_commerce_customer_behavior_sheet_1`.
+   (Update `SOURCE_TABLE` in notebook `00` if your catalog/table name differs.)
+3. Run the notebooks in order:
 
 | Step | Notebook | Description |
 |:----:|----------|-------------|
-| 0 | `schema_mgt/00_setup_and_data_prep` | Create schemas + Volume; read CSV from the Volume; normalise columns; land `raw.customers_raw` |
+| 0 | `schema_mgt/00_setup_and_data_prep` | Create schemas; read the uploaded table; normalise columns; land `raw.customers_raw` |
 | 1 | `src/01_customers_bronze` | Raw → Bronze with `ingestion_timestamp` + `source_file` lineage |
 | 2 | `src/02_customers_silver` | Quality expectations (pass / quarantine) + auto-clustered write |
 | 3 | `src/03_customers_gold` | Customer value by membership tier & city + Delta Time Travel |
 
-**Prerequisites:** a Unity Catalog workspace (Free Edition works); Databricks Runtime 13.3 LTS+ or Free Edition serverless.
+**Prerequisites:** a Unity Catalog–enabled Databricks workspace; Databricks Runtime 13.3 LTS+ or serverless. Column mapping in notebook `00` is case-insensitive, so it tolerates however the upload UI sanitised the headers.
 
 ---
 
@@ -176,7 +176,7 @@ Quarantine breakdown from `02_customers_silver` — every rejected row, explaine
 
 ```sql
 SELECT failed_rules, COUNT(*) AS rows_quarantined
-FROM workspace.silver.customers_quarantine
+FROM shift_left_optimization.silver.customers_quarantine
 GROUP BY failed_rules ORDER BY rows_quarantined DESC
 ```
 
